@@ -1,0 +1,61 @@
+{
+  "name": "stellar-viaduct",
+  "version": "1.0.0",
+  "description": "Premium open-source monitoring infrastructure for cross-chain asset bridges, DEX liquidity, and bridged asset health on the Stellar network",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend",
+    "sdk"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspaces --if-present",
+    "build:backend": "npm run build --workspace=backend",
+    "build:frontend": "npm run build --workspace=frontend",
+    "build:sdk": "npm run build --workspace=sdk",
+    "test": "npm run test --workspaces --if-present",
+    "test:backend": "npm run test --workspace=backend",
+    "test:sdk": "npm run test --workspace=sdk",
+    "test:load": "k6 run load-tests/scenarios/api-load.js -e PROFILE=smoke -e BASE_URL=http://127.0.0.1:3001",
+    "test:load:report": "node load-tests/scripts/generate-report.mjs load-tests/results/summary.json load-tests/results/report.md",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report",
+    "lint": "npm run lint --workspaces --if-present",
+    "setup": "bash scripts/setup.sh",
+    "setup:quick": "bash scripts/setup.sh --skip-contracts --skip-ide -y",
+    "sandbox": "NODE_ENV=sandbox tsx sandbox/seed.ts && npm run dev",
+    "sandbox:reset": "NODE_ENV=sandbox tsx sandbox/seed.ts"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Stellar_Viaduct/Stellar_Viaduct.git"
+  },
+  "license": "MIT",
+  "keywords": [
+    "stellar",
+    "viaduct",
+    "bridge",
+    "monitoring",
+    "defi",
+    "soroban",
+    "cross-chain",
+    "liquidity",
+    "analytics",
+    "web3"
+  ],
+  "devDependencies": {
+    "@playwright/test": "^1.54.2",
+    "@types/use-sync-external-store": "^1.5.0"
+  },
+  "overrides": {
+    "@asamuzakjp/css-color": "4.1.2"
+  }
+}

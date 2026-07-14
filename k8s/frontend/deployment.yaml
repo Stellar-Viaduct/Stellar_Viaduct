@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stellar-viaduct-frontend
+  namespace: stellar-viaduct
+  labels:
+    app.kubernetes.io/name: stellar-viaduct
+    app.kubernetes.io/component: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: stellar-viaduct-frontend
+  template:
+    metadata:
+      labels:
+        app: stellar-viaduct-frontend
+        app.kubernetes.io/component: frontend
+    spec:
+      serviceAccountName: stellar-viaduct
+      containers:
+        - name: frontend
+          image: ghcr.io/stellar_viaduct/stellar-viaduct-frontend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: VITE_API_BASE_URL
+              value: "https://stellar-viaduct.example.com/api/v1"
+            - name: VITE_WS_URL
+              value: "wss://stellar-viaduct.example.com/api/v1/ws"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"

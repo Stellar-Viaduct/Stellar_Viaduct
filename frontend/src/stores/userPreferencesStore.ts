@@ -1,0 +1,188 @@
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { devtools } from "zustand/middleware";
+
+export interface UserPreferences {
+  defaultAsset: string;
+  defaultTimeRange: "1h" | "24h" | "7d" | "30d";
+  refreshInterval: number;
+  notificationsEnabled: boolean;
+  soundEnabled: boolean;
+  sidebarCollapsed: boolean;
+  dashboardLayout: "grid" | "list";
+  favoriteAssets: string[];
+  favoriteBridges: string[];
+  /** Narrow lists to starred items when set to favorites */
+  favoritesFilterMode: "all" | "favorites";
+  /** Sort key for dashboard asset discovery */
+  assetSort: "symbol" | "health";
+  alertThresholds: {
+    priceDeviation: number;
+    supplyMismatch: number;
+    healthScoreDrop: number;
+  };
+}
+
+const defaultPreferences: UserPreferences = {
+  defaultAsset: "USDC",
+  defaultTimeRange: "24h",
+  refreshInterval: 30000,
+  notificationsEnabled: true,
+  soundEnabled: false,
+  sidebarCollapsed: false,
+  dashboardLayout: "grid",
+  favoriteAssets: [],
+  favoriteBridges: [],
+  favoritesFilterMode: "all",
+  assetSort: "symbol",
+  alertThresholds: {
+    priceDeviation: 0.02,
+    supplyMismatch: 0.1,
+    healthScoreDrop: 10,
+  },
+};
+
+interface UserPreferencesState extends UserPreferences {
+  setPreference: <K extends keyof UserPreferences>(
+    key: K,
+    value: UserPreferences[K]
+  ) => void;
+  setPreferences: (preferences: Partial<UserPreferences>) => void;
+  resetPreferences: () => void;
+  addFavoriteAsset: (asset: string) => void;
+  removeFavoriteAsset: (asset: string) => void;
+  toggleFavoriteBridge: (bridgeName: string) => void;
+  setFavoritesFilterMode: (mode: UserPreferences["favoritesFilterMode"]) => void;
+  toggleSidebar: () => void;
+  setAlertThreshold: (
+    type: keyof UserPreferences["alertThresholds"],
+    value: number
+  ) => void;
+}
+
+export const useUserPreferencesStore = create<UserPreferencesState>()(
+  devtools(
+    persist(
+      (set, get) => ({
+        ...defaultPreferences,
+
+        setPreference: (key, value) => {
+          set({ [key]: value }, false, `setPreference/${key}`);
+        },
+
+        setPreferences: (preferences) => {
+          set((state) => ({ ...state, ...preferences }), false, "setPreferences");
+        },
+
+        resetPreferences: () => {
+          set(defaultPreferences, false, "resetPreferences");
+        },
+
+        addFavoriteAsset: (asset) => {
+          const current = get().favoriteAssets;
+          if (!current.includes(asset)) {
+            set(
+              { favoriteAssets: [...current, asset] },
+              false,
+              "addFavoriteAsset"
+            );
+          }
+        },
+
+        removeFavoriteAsset: (asset) => {
+          set(
+            {
+              favoriteAssets: get().favoriteAssets.filter((a) => a !== asset),
+            },
+            false,
+            "removeFavoriteAsset"
+          );
+        },
+
+        toggleFavoriteBridge: (bridgeName) => {
+          const current = get().favoriteBridges;
+          if (current.includes(bridgeName)) {
+            set(
+              {
+                favoriteBridges: current.filter((b) => b !== bridgeName),
+              },
+              false,
+              "toggleFavoriteBridge/remove"
+            );
+          } else {
+            set(
+              { favoriteBridges: [...current, bridgeName] },
+              false,
+              "toggleFavoriteBridge/add"
+            );
+          }
+        },
+
+        setFavoritesFilterMode: (mode) => {
+          set({ favoritesFilterMode: mode }, false, "setFavoritesFilterMode");
+        },
+
+        toggleSidebar: () => {
+          set(
+            { sidebarCollapsed: !get().sidebarCollapsed },
+            false,
+            "toggleSidebar"
+          );
+        },
+
+        setAlertThreshold: (type, value) => {
+          set(
+            {
+              alertThresholds: {
+                ...get().alertThresholds,
+                [type]: value,
+              },
+            },
+            false,
+            `setAlertThreshold/${type}`
+          );
+        },
+      }),
+      {
+        name: "stellar-viaduct-user-preferences",
+        storage: createJSONStorage(() => localStorage),
+        version: 2,
+        migrate: (persisted: unknown, version: number) => {
+          const p = persisted as Partial<UserPreferences>;
+          if (version < 2) {
+            return {
+              ...defaultPreferences,
+              ...p,
+              favoriteBridges: p.favoriteBridges ?? [],
+              favoritesFilterMode: p.favoritesFilterMode ?? "all",
+              assetSort: p.assetSort ?? "symbol",
+            };
+          }
+          return { ...defaultPreferences, ...p };
+        },
+      }
+    ),
+    { name: "UserPreferencesStore" }
+  )
+);
+
+export const selectUserPreferences = (state: UserPreferencesState) => ({
+  defaultAsset: state.defaultAsset,
+  defaultTimeRange: state.defaultTimeRange,
+  refreshInterval: state.refreshInterval,
+  notificationsEnabled: state.notificationsEnabled,
+  soundEnabled: state.soundEnabled,
+  sidebarCollapsed: state.sidebarCollapsed,
+  dashboardLayout: state.dashboardLayout,
+  favoriteAssets: state.favoriteAssets,
+  favoriteBridges: state.favoriteBridges,
+  favoritesFilterMode: state.favoritesFilterMode,
+  assetSort: state.assetSort,
+  alertThresholds: state.alertThresholds,
+});
+
+export const selectAlertThresholds = (state: UserPreferencesState) =>
+  state.alertThresholds;
+
+export const selectFavoriteAssets = (state: UserPreferencesState) =>
+  state.favoriteAssets;

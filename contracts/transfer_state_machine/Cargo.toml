@@ -1,0 +1,15 @@
+[package]
+name = "transfer-state-machine"
+version = "0.1.0"
+edition = "2021"
+description = "Soroban state machine for bridge transfer lifecycle (Stellar Viaduct)"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+soroban-sdk = { version = "22.0.10" }
+
+[dev-dependencies]
+soroban-sdk = { version = "22.0.10", features = ["testutils"] }

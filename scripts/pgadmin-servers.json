@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Stellar Viaduct (dev)",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "stellar_viaduct",
+      "Username": "stellar_viaduct",
+      "SSLMode": "prefer",
+      "PassFile": "/pgpass"
+    }
+  }
+}

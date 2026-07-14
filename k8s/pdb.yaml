@@ -1,0 +1,28 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: stellar-viaduct-backend-pdb
+  namespace: stellar-viaduct
+  labels:
+    app.kubernetes.io/name: stellar-viaduct
+    app.kubernetes.io/component: backend
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: stellar-viaduct-backend
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: stellar-viaduct-frontend-pdb
+  namespace: stellar-viaduct
+  labels:
+    app.kubernetes.io/name: stellar-viaduct
+    app.kubernetes.io/component: frontend
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: stellar-viaduct-frontend

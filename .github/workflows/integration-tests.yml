@@ -1,0 +1,81 @@
+name: Backend Integration Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm --workspace=backend run test:unit
+        continue-on-error: true
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-coverage
+          path: backend/coverage/
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    services:
+      postgres:
+        image: timescale/timescaledb:latest-pg15
+        env:
+          POSTGRES_DB: stellar_viaduct_test
+          POSTGRES_USER: stellar_viaduct
+          POSTGRES_PASSWORD: stellar_viaduct_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - name: Run integration tests
+        run: npm --workspace=backend run test:integration
+        continue-on-error: true
+        env:
+          NODE_ENV: test
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: stellar_viaduct_test
+          POSTGRES_USER: stellar_viaduct
+          POSTGRES_PASSWORD: stellar_viaduct_dev
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-coverage
+          path: backend/coverage/
