@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useNotificationLiveUpdates } from "../hooks/useNotificationLiveUpdates";
 import { useWatchlist } from "../hooks/useWatchlist";
 import { selectUnreadCount, useNotificationStore } from "../stores/notificationStore";
@@ -11,14 +11,19 @@ import { useTranslatedDesktopNavItems } from "../hooks/useTranslatedNav";
 import NotificationsDrawer from "./NotificationsDrawer";
 import GlobalSearch from "./search/GlobalSearch";
 import UnreadCountBadge from "./UnreadCountBadge";
+import { useAuth } from "../lib/auth";
 
 export default function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const desktopNavItems = useTranslatedDesktopNavItems();
   const { activeSymbols } = useWatchlist();
+  const { user, logout, isAuthenticated } = useAuth();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const notificationTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const profileRef = useRef<HTMLDivElement | null>(null);
   const previousDrawerOpen = useRef(false);
   const unreadCount = useNotificationStore(selectUnreadCount);
 
@@ -132,6 +137,57 @@ export default function Navbar() {
                 </svg>
                 <UnreadCountBadge unreadCount={unreadCount} />
               </button>
+
+              {isAuthenticated && user && (
+                <div className="relative" ref={profileRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsProfileOpen((o) => !o)}
+                    className="flex items-center gap-2 rounded-lg p-1.5 text-viaduct-text-secondary hover:text-viaduct-text-primary hover:bg-viaduct-surface transition-all"
+                    aria-label="User menu"
+                    aria-expanded={isProfileOpen}
+                    aria-haspopup="true"
+                  >
+                    <span className="flex items-center justify-center w-7 h-7 rounded-full bg-viaduct-accent/15 text-viaduct-accent text-xs font-bold">
+                      {user.name.charAt(0).toUpperCase()}
+                    </span>
+                  </button>
+                  {isProfileOpen && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setIsProfileOpen(false)} />
+                      <div className="absolute right-0 mt-2 w-56 z-20 rounded-xl border border-viaduct-border bg-viaduct-card shadow-premium overflow-hidden">
+                        <div className="px-4 py-3 border-b border-viaduct-border">
+                          <p className="text-sm font-medium text-viaduct-text-primary">{user.name}</p>
+                          <p className="text-xs text-viaduct-text-secondary mt-0.5">{user.email}</p>
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            {user.roles.map((role) => (
+                              <span key={role} className="inline-flex items-center px-2 py-0.5 rounded-md bg-viaduct-accent/10 text-xs font-medium text-viaduct-accent">
+                                {role}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="p-1">
+                          <button
+                            type="button"
+                            onClick={() => { setIsProfileOpen(false); navigate("/settings"); }}
+                            className="w-full rounded-lg px-3 py-2 text-left text-sm text-viaduct-text-secondary hover:text-viaduct-text-primary hover:bg-viaduct-surface transition-all"
+                          >
+                            Settings
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setIsProfileOpen(false); logout(); navigate("/"); }}
+                            className="w-full rounded-lg px-3 py-2 text-left text-sm text-red-400 hover:bg-red-500/10 transition-all"
+                          >
+                            Sign out
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
 
               <HamburgerButton
                 open={isMobileMenuOpen}
