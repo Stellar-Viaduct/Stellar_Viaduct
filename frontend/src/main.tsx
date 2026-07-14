@@ -8,6 +8,8 @@ import { TimeRangeProvider } from "./hooks/useTimeRange";
 import { WatchlistProvider } from "./hooks/useWatchlist";
 import { WebSocketProvider } from "./contexts/WebSocketContext";
 import ThemeProvider from "./theme/ThemeProvider";
+import { AuthProvider } from "./lib/auth";
+import { AnalyticsContextProvider } from "./lib/analytics";
 import "./i18n/config";
 import "./index.css";
 
@@ -16,6 +18,7 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 30_000,
       refetchInterval: 60_000,
+      retry: 2,
     },
   },
 });
@@ -37,13 +40,17 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <BrowserRouter>
-            <WebSocketProvider>
-              <WatchlistProvider>
-                <TimeRangeProvider>
-                  <App />
-                </TimeRangeProvider>
-              </WatchlistProvider>
-            </WebSocketProvider>
+            <AuthProvider>
+              <AnalyticsContextProvider>
+                <WebSocketProvider>
+                  <WatchlistProvider>
+                    <TimeRangeProvider>
+                      <App />
+                    </TimeRangeProvider>
+                  </WatchlistProvider>
+                </WebSocketProvider>
+              </AnalyticsContextProvider>
+            </AuthProvider>
           </BrowserRouter>
         </QueryClientProvider>
       </ThemeProvider>
